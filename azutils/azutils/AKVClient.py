@@ -168,4 +168,4 @@ class AKVClient:
        """
        Provides access to Adobe Analytics Subject Account.
        """
-       return cls.dbutils.secrets.get(scope = cls.dbcSecretScopeName(), key = "aa-subject-account")
+       return cls.dbutils.secrets.get(scope = cls.dbcSecretScopeName(), key = "aa-subject-account") 
