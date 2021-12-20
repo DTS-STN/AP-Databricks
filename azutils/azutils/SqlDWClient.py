@@ -20,7 +20,7 @@ class SqlDWClient:
     SqlDWClient.spark.conf.set('fs.azure.account.key.' + AKVClient.adlsName() + '.dfs.core.windows.net', AKVClient.adlsAccessKey())
   
   @classmethod
-  def write(cls, df, dw_table:str, write_mode:str = "overwrite"):
+  def write(cls, df, table:str, mode:str = "overwrite"):
     """Writes dataframe to Synapse Table."""
     cls.connect_to_adls(cls)
     
@@ -34,11 +34,11 @@ class SqlDWClient:
       .option("password", AKVClient.jdbcPassword()) \
       .option("tempDir", temp_dir) \
       .option("forward_spark_azure_storage_credentials", "true") \
-      .option("dbtable", f"dbo.{dw_table}") \
-      .mode(write_mode) \
+      .option("dbtable", f"dbo.{table}") \
+      .mode(mode) \
       .save()
     
-    print(f"Table {dw_table} created in synapse database")
+    print(f"Table {table} created in synapse database")
 
   @classmethod
   def read(cls, query:str):
