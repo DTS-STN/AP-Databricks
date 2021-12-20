@@ -122,6 +122,7 @@ The modules of Azutils are:
 >>```python
 >>MountClient(container="test")
 >>```
+>>Instances are not required to use the **`read`** and **`write`** method of this class.
 
 >>**`mount()`**
 >>>>Mounts container if it is not mounted and exists in Azure Storage account.
