@@ -64,8 +64,8 @@ class SqlDWClient:
     db_table_names = [f"{name.TABLE_SCHEMA}.{name.TABLE_NAME}" for name in db_tables.select("TABLE_SCHEMA", "TABLE_NAME").collect()]
 
     #if all tables in the query exist then perform read otherwise print the table names that do not exist 
-    if not all(table in db_table_names for table in cls.get_tables(cls, query)):
-      for tbl in cls.get_tables(cls, query):
+    if not all(table in db_table_names for table in cls._get_tables(cls, query)):
+      for tbl in cls._get_tables(cls, query):
         if tbl not in db_table_names:
           print(f"Table does not exist : {tbl}")
     else: 
@@ -79,12 +79,11 @@ class SqlDWClient:
         .option("Query", query) \
         .load()
         
-
-  def get_tables(self, query):
+  def _get_tables(self, query):
     
     # splits query string on 'FROM'
     # removes the first element in the list as it is a 'select' clause
-    tables = re.split(self.create_combinations(self, 'FROM'), query)[1:]
+    tables = re.split(self._create_combinations(self, 'FROM'), query)[1:]
 
     table_list = []
     
@@ -93,10 +92,10 @@ class SqlDWClient:
 
       #removes select if it is in the parsed string
       if 'select' in table.lower():
-        table = re.split(self.create_combinations(self, 'SELECT'), table)[0]
+        table = re.split(self._create_combinations(self, 'SELECT'), table)[0]
       #gets tables listed after join
       if 'join' in table.lower():
-        tbls_after_join = re.split(self.create_combinations(self, 'JOIN'), table)[1:]
+        tbls_after_join = re.split(self._create_combinations(self, 'JOIN'), table)[1:]
         for tb in tbls_after_join:
           if len(tb.strip().split(" ")) > 1 and ('.' in tb.strip().split(" ")[0]):
             table_list.append(tb.strip().split(" ")[0])  
@@ -127,7 +126,7 @@ class SqlDWClient:
     #returns a list of tables
     return table_list
 
-  def create_combinations(self, word:str):
+  def _create_combinations(self, word:str):
     #create uppercase and lowercase combinations of a 'word' to cover various styles of user inputs
     combinations=[''.join(x) for x in permutations(list(word.lower())+list(word.upper()),len(word)) if ''.join(x).lower()==word.lower()]
 
