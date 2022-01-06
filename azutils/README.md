@@ -144,7 +144,7 @@ The modules of Azutils are:
 >>>>**Parameters:**
 >>>>* **source_path : _str_** - string, input file path in mounted container
 >>>>* **source_format : _str_** - string, format of input file e.g. 'json', 'parquet', 'csv'
->>>>* **schema :  an optional ```pyspark.sql.types.StructType``` for the input schema
+>>>>* **schema** -  an optional ```pyspark.sql.types.StructType``` for the input schema
 >>>>* **options : _dict_** - dictionary, input options e.g. ```{"header": True}``` for a csv file
 
 >>```python
