@@ -45,7 +45,7 @@ class MountClient:
     return any(mount.mountPoint == self.mount_point for mount in AKVClient.dbutils.fs.mounts())
 
   @classmethod
-  def read(cls, source_path: str, source_format: str, options:dict = None):
+  def read(cls, source_path: str, source_format: str, schema = None, options:dict = None):
     """Reads data from Azure Data Lake Storage"""
     #mounts container if container is not already mounted 
     pattern = "/mnt/stsaebdevca01/([A-Za-z0-9-_]*)/.*$"
@@ -62,25 +62,49 @@ class MountClient:
         AKVClient.dbutils.fs.ls(directory)
         #check if file exists
         if source_file in [file.name for file in AKVClient.dbutils.fs.ls(directory)]:
-          if options == None:
-            if source_format == "csv":
-              #reads csv file with header if file type is csv and reader options are not given
-              options = {"header": True}
+          if schema == None:
+            if options == None:
+              if source_format == "csv":
+                #reads csv file with header if file type is csv and reader options are not given
+                options = {"header": True}
+                return AKVClient.spark.read \
+                  .format(source_format) \
+                  .options(**options) \
+                  .load(source_path)
+              else: 
+                #basic file read if file type is not a csv and reader options are not given
+                return AKVClient.spark.read \
+                  .format(source_format) \
+                  .load(source_path)
+            else:
+              #reads file with given reader options
               return AKVClient.spark.read \
                 .format(source_format) \
                 .options(**options) \
                 .load(source_path)
-            else: 
-              #basic file read if file type is not a csv and reader options are not given
+          else:
+            if options == None:
+              if source_format == "csv":
+                #reads csv file with header if file type is csv and reader options are not given
+                options = {"header": True}
+                return AKVClient.spark.read \
+                  .format(source_format) \
+                  .options(**options) \
+                  .schema(schema) \
+                  .load(source_path)
+              else: 
+                #basic file read if file type is not a csv and reader options are not given
+                return AKVClient.spark.read \
+                  .format(source_format) \
+                  .schema(schema) \
+                  .load(source_path)
+            else:
+              #reads file with given reader options
               return AKVClient.spark.read \
                 .format(source_format) \
+                .options(**options) \
+                .schema(schema) \
                 .load(source_path)
-          else:
-            #reads file with given reader options
-            return AKVClient.spark.read \
-              .format(source_format) \
-              .options(**options) \
-              .load(source_path)
         else: print(f"File does not exist: {source_path}")
       except: print(f"Path does not exist: {source_path}")
 
