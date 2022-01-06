@@ -138,12 +138,13 @@ The modules of Azutils are:
 >>MountClient(container="test").unmount()
 >>```
 
->>**`read(source_path, source_format, options)`**
+>>**`read(source_path, source_format, schema, options)`**
 >>>>Loads specified file and returns the result as a dataframe. Before loading the file, the function checks to see if the specified path is correct and if the container mentioned in the path is mounted.
 
 >>>>**Parameters:**
 >>>>* **source_path : _str_** - string, input file path in mounted container
 >>>>* **source_format : _str_** - string, format of input file e.g. 'json', 'parquet', 'csv'
+>>>>* **schema :  an optional ```pyspark.sql.types.StructType``` for the input schema
 >>>>* **options : _dict_** - dictionary, input options e.g. ```{"header": True}``` for a csv file
 
 >>```python
