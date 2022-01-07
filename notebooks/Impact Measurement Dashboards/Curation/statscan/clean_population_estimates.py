@@ -29,7 +29,7 @@ source_file_path = "/mnt/stsaebdevca01/statscan/population-estimates/input/17100
 
 # COMMAND ----------
 
-df = MountClient.read(source_file_path, "csv", pop_est_schema, options={"header": True})
+df = MountClient.read(source_file_path, "csv", pop_est_schema, options={"header":True})
 display(df)
 
 # COMMAND ----------
@@ -65,4 +65,4 @@ SqlDWClient.write(df_pivot, "17100005_PopEstimates_SC")
 
 # Write to adls as csv so we can read and perform joins with other dataframes
 output_path = "/mnt/stsaebdevca01/saebcurated/statscan/17100005_PopEstimates_SC.csv" 
-MountClient.write(df_pivot, output_path, "csv", options={"header": True})
+MountClient.write(df_pivot, output_path, "csv", options={"header":True})
