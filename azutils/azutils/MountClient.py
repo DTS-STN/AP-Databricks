@@ -45,7 +45,7 @@ class MountClient:
     return any(mount.mountPoint == self.mount_point for mount in AKVClient.dbutils.fs.mounts())
 
   @classmethod
-  def read(cls, source_path: str, source_format: str, options:dict = None):
+  def read(cls, source_path: str, source_format: str, schema = None, options:dict = {}):
     """Reads data from Azure Data Lake Storage"""
     #mounts container if container is not already mounted 
     pattern = "/mnt/stsaebdevca01/([A-Za-z0-9-_]*)/.*$"
@@ -62,30 +62,25 @@ class MountClient:
         AKVClient.dbutils.fs.ls(directory)
         #check if file exists
         if source_file in [file.name for file in AKVClient.dbutils.fs.ls(directory)]:
-          if options == None:
-            if source_format == "csv":
-              #reads csv file with header if file type is csv and reader options are not given
-              options = {"header": True}
-              return AKVClient.spark.read \
-                .format(source_format) \
-                .options(**options) \
-                .load(source_path)
-            else: 
-              #basic file read if file type is not a csv and reader options are not given
-              return AKVClient.spark.read \
-                .format(source_format) \
-                .load(source_path)
+          if schema == None:
+            #reads file when schema is not given
+            df = AKVClient.spark.read \
+                  .format(source_format) \
+                  .options(**options) \
+                  .load(source_path)
           else:
-            #reads file with given reader options
-            return AKVClient.spark.read \
-              .format(source_format) \
-              .options(**options) \
-              .load(source_path)
+            #reads file with provided schema
+            df = AKVClient.spark.read \
+                  .format(source_format) \
+                  .options(**options) \
+                  .schema(schema) \
+                  .load(source_path)
+          return df
         else: print(f"File does not exist: {source_path}")
       except: print(f"Path does not exist: {source_path}")
 
   @classmethod
-  def write(cls, df, output_path: str, output_format: str, mode:str = "overwrite", options:dict = None):
+  def write(cls, df, output_path: str, output_format: str, mode:str = "overwrite", options:dict = {}):
     """Writes data to Azure Data Lake Storage. Default write mode is 'overwrite'."""
     #mounts container if container is not already mounted 
     pattern = "/mnt/stsaebdevca01/([A-Za-z0-9-_]*)/.*$"
@@ -96,28 +91,9 @@ class MountClient:
     #write to container only if it is mounted
     if MountClient(container)._is_mounted():
       
-      if options==None:
-        if output_format=="csv":
-          #writes csv file with header if file type is csv and writer options are not given
-          options={"header": True}
-          df.write \
-            .format(output_format) \
-            .options(**options) \
-            .mode(mode) \
-            .save(output_path)
-          print(f"Data written to {output_path}")
-        else: 
-          #basic df write if file type is not a csv and writer options are not given
-          df.write \
-            .format(output_format) \
-            .mode(mode) \
-            .save(output_path)
-          print(f"Data written to {output_path}")
-      else:
-        #writes file with given writer options
-        df.write \
-          .format(output_format) \
-          .options(**options) \
-          .mode(mode) \
-          .save(output_path)
-        print(f"Data written to {output_path}")
+      df.write \
+        .format(output_format) \
+        .options(**options) \
+        .mode(mode) \
+        .save(output_path)
+      print(f"Data written to {output_path}")

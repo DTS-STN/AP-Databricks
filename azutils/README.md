@@ -138,13 +138,14 @@ The modules of Azutils are:
 >>MountClient(container="test").unmount()
 >>```
 
->>**`read(source_path, source_format, options)`**
+>>**`read(source_path, source_format, schema=None, options={})`**
 >>>>Loads specified file and returns the result as a dataframe. Before loading the file, the function checks to see if the specified path is correct and if the container mentioned in the path is mounted.
 
 >>>>**Parameters:**
 >>>>* **source_path : _str_** - string, input file path in mounted container
 >>>>* **source_format : _str_** - string, format of input file e.g. 'json', 'parquet', 'csv'
->>>>* **options : _dict_** - dictionary, input options e.g. ```{"header": True}``` for a csv file
+>>>>* **schema** -  an optional ```pyspark.sql.types.StructType``` for the input schema
+>>>>* **options : _dict_** - dictionary, input options e.g. ```{"header": True}``` for a csv file, default is an empty dictionary
 
 >>```python
 >>source_path = "/mnt/<storage_account>/<container>/population-projections/input/17100057.csv"
@@ -152,7 +153,7 @@ The modules of Azutils are:
 >>display(df)
 >>```
 
->>**`write(df, output_path, output_format, mode='overwrite', options)`**
+>>**`write(df, output_path, output_format, mode='overwrite', options={})`**
 >>>>Saves the content of the dataframe in a specified format at the specified path. Before saving the file, the function checks to see if the specified path is correct and if the container mentioned in the path is mounted.
 
 >>>>**Parameters:**
@@ -165,7 +166,7 @@ The modules of Azutils are:
 >>>>>>* _overwrite_: overwrite existing data
 >>>>>>* _error_ or _errorifexists_: Throw an exception if data already exists
 >>>>>>* _ignore_: silently ignore this operation if data already exists
->>>>* **options : _dict_** - dictionary, ouput options e.g. ```{"header": True}``` for a csv file
+>>>>* **options : _dict_** - dictionary, ouput options e.g. ```{"header": True}``` for a csv file, default is an empty dictionary
 
 >>```python
 >>output_path = "/mnt/<storage_account>/<container>/statscan/Pop_Projections_test"
