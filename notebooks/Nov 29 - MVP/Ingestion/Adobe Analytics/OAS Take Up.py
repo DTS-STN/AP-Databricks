@@ -32,9 +32,6 @@ metrics = dbutils.widgets.get("metrics")
 dbutils.widgets.text("start_date", "", "")
 start_date = dbutils.widgets.get("start_date")
 
-dbutils.widgets.text("end_date", "", "")
-end_date = dbutils.widgets.get("end_date")
-
 dbutils.widgets.text("output_file_path", "", "")
 output_file_path = dbutils.widgets.get("output_file_path")
 
@@ -712,7 +709,7 @@ aa = analytics_client(
 aa.set_report_suite(report_suite_id = REPORT_SUITE_ID)
 
 
-aa.set_date_range(date_start = datetime.today().date().replace(day=1).strftime('%Y-%m-%d'), date_end= datetime.today().strftime('%Y-%m-%d'))
+aa.set_date_range(date_start = start_date, date_end= datetime.today().strftime('%Y-%m-%d'))
 
 for segment in re.split(', |,', segments):
     aa.add_global_segment(segment_id = segment)
