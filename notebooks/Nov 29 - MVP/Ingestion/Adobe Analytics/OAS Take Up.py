@@ -1,14 +1,11 @@
 # Databricks notebook source
 #imports
 from azure.storage.blob import BlobClient 
-import os
-from datetime import datetime
 import webbrowser
 from urllib.parse import urlparse
 from urllib.parse import parse_qs
 from urllib.parse import urlencode
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 import time
 import json
 import jwt
