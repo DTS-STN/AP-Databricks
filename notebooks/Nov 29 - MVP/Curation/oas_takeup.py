@@ -1,4 +1,8 @@
 # Databricks notebook source
+# TEST build trigger in team city
+
+# COMMAND ----------
+
 # MAGIC %run ./setup/mount_client
 
 # COMMAND ----------
