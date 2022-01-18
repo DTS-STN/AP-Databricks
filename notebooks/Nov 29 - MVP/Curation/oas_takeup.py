@@ -8,13 +8,13 @@ MountClient(container_name="saebcurated").mount()
 # COMMAND ----------
 
 from pyspark.sql.types import DoubleType, IntegerType
-from pyspark.sql.functions import sum, first, round, avg, regexp_extract, lit, col, regexp_extract, desc, max, lag, when, isnull
+from pyspark.sql.functions import sum, first, last, round, avg, regexp_extract, lit, col, regexp_extract, desc, max, lag, when, isnull
 from pyspark.sql.window import Window
 
 
 # COMMAND ----------
 
-# Two main data sets that make up the OAS Takeup master datasets
+# Three main data sets that make up the OAS Takeup master datasets
 
 path_pop_lfs_sc = "/mnt/stsaebdevca01/saebcurated/statscan/1410001701_Pop_LFS_SC.csv"
 pop_lfs_sc = spark.read.option("header", True).option("inferSchema", True).csv(path_pop_lfs_sc)
@@ -105,6 +105,10 @@ aa_apply_regions_monthly = (aa_apply_regions_monthly
 
 # COMMAND ----------
 
+display(aa_apply_regions_monthly)
+
+# COMMAND ----------
+
 # Add "Canada" to aa_apply_regions_monthly
 
 aa_apply_regions_monthly_raw = aa_apply_regions_monthly.drop("mom_change_uniq_visitors", "mom_change_visits")
@@ -120,6 +124,10 @@ aa_apply_canada = (aa_apply_regions_monthly_raw
 aa_apply_all = aa_apply_regions_monthly_raw.withColumn("sort_id", lit(1))
 aa_apply_all = aa_apply_all.unionByName(aa_apply_canada).sort("year", "month", "sort_id").drop("sort_id")
 
+
+# COMMAND ----------
+
+display(aa_apply_all)
 
 # COMMAND ----------
 
@@ -147,6 +155,35 @@ aa_apply_all = aa_apply_all.drop("prev_month_uniq_visitors", "prev_month_visits"
 
 # COMMAND ----------
 
+display(pop_lfs_sc_takeup)
+display(aa_apply_all)
+
+# COMMAND ----------
+
+# # Clean up above tables for annual grouping
+# yoy_window = Window.partitionBy("province", "year").orderBy("month")
+
+# pop_lfs_sc_takeup_annual = pop_lfs_sc_takeup.drop("sex", "age_group", "status")
+# aa_apply_all_annual = aa_apply_all.drop("mom_change_uniqu_visitors", "mom_change_visits")
+
+# pop_lfs_sc_takeup_annual = pop_lfs_sc_takeup_annual.groupBy("province", "year").agg(max("population").alias("year_end_pop")).filter(col("province") == "Canada")
+# aa_apply_all_annual = aa_apply_all_annual.groupBy(["province", "year"]).agg(sum("unique_visitors").alias("unique_visitors"), sum("visits").alias("visits")).filter(col("province") == "Canada")
+
+# COMMAND ----------
+
+# display(pop_lfs_sc_takeup_annual)
+# display(aa_apply_all_annual)
+
+# COMMAND ----------
+
+# Join the two tables above and do the yoy calculationn
+
+# oas_takeup_avg = pop_lfs_sc_takeup_annual.join(aa_apply_all_annual, ["year", "province"], "outer")
+
+# display(oas_takeup_avg)
+
+# COMMAND ----------
+
 oas_takeup = pop_lfs_sc_takeup.join(aa_apply_all, ["year", "month", "province", "date_2"], "outer")
 oas_takeup = oas_takeup.withColumn("takeup_rate_regional", round((oas_takeup.unique_visitors / oas_takeup.population), 5))
 
@@ -157,10 +194,6 @@ oas_takeup_country = oas_takeup.filter(col("province") == "Canada").withColumnRe
 # COMMAND ----------
 
 # MAGIC %run ./setup/sqldw_client
-
-# COMMAND ----------
-
-display(oas_takeup_regional)
 
 # COMMAND ----------
 
@@ -187,6 +220,41 @@ SqlDWClient().write(oas_takeup_country, "OAS_Takeup_Country")
 
 # Write to adls as csv so we can read and perform joins with other dataframes
 oas_takeup_country.write.mode("overwrite").option("header", True).csv("/mnt/stsaebdevca01/saebcurated/OAS_Takeup_Country.csv")
+
+# COMMAND ----------
+
+oas_takeup_country_annual = oas_takeup_country.groupBy("province", "year").agg(avg("takeup_rate_country").alias("yearly_avg_takeup"))
+display(oas_takeup_country_annual)
+
+# COMMAND ----------
+
+# Get YOY changes in takeup
+
+yoy_window = Window.partitionBy("province").orderBy("year")
+takeup_avg = (oas_takeup_country_annual
+                .withColumn("prev_takeup", 
+                        lag(oas_takeup_country_annual.yearly_avg_takeup)
+                        .over(yoy_window)))
+
+display(takeup_avg)
+
+takeup_avg = (takeup_avg
+               .withColumn("yoy_change_takeup", 
+                            when(isnull(takeup_avg.yearly_avg_takeup - takeup_avg.prev_takeup), 0)
+                            .otherwise(round((takeup_avg.yearly_avg_takeup - takeup_avg.prev_takeup) / takeup_avg.prev_takeup, 3))).drop("prev_takeup"))
+
+
+# COMMAND ----------
+
+# Write to data warehouse
+SqlDWClient().write(takeup_avg, "OAS_Takeup_Avg")
+
+# Write to adls as csv so we can read and perform joins with other dataframes
+takeup_avg.write.mode("overwrite").option("header", True).csv("/mnt/stsaebdevca01/saebcurated/OAS_Takeup_Avg.csv")
+
+# COMMAND ----------
+
+display(takeup_avg)
 
 # COMMAND ----------
 
