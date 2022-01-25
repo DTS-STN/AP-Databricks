@@ -1,5 +1,6 @@
 # Databricks notebook source
 # TEST build trigger in team city
+# Testing for video tutorial
 
 # COMMAND ----------
 
