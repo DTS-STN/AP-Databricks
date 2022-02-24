@@ -15,15 +15,21 @@ from pyspark.sql.window import Window
 # COMMAND ----------
 
 source_file_path = "/mnt/stsaebdevca01/esdc-open-data/oas/number_of_new_benefits_by_province_and_type.csv"
-df = spark.read \
-          .option("header", True) \
-          .csv(source_file_path)
+df = (spark.read 
+      .option("header", False)
+      .csv(source_file_path)
+      # drop rows with null values in all columns
+      .dropna(how="all")
+      # select only the first five columns
+      .select('_c0', '_c1', '_c2', '_c3', '_c4')
+     )
 
 
 # COMMAND ----------
 
-# Use pandas to delete the first couple rows
+# Use pandas to set header and delete the first couple rows
 df_pd = df.toPandas()
+df_pd.columns = df_pd.iloc[0]
 df_pd = df_pd.iloc[2: , :]
 
 # Go back to using spark and delete pandas frame
